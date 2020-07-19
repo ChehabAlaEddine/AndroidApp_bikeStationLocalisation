@@ -1,5 +1,6 @@
 package com.abhiandroid.GoogleMaps.googlemaps;
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -7,6 +8,7 @@ import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -29,7 +31,17 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.abhiandroid.GoogleMaps.googlemaps.R;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Locale;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -43,6 +55,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Marker mCurrLocationMarker;
     LocationRequest mLocationRequest;
     private GoogleMap mMap;
+    ProgressDialog pd;
+    JSONArray jsonArr;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG,"onCreate");
@@ -78,6 +93,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             buildGoogleApiClient();
             mMap.setMyLocationEnabled(true);
         }
+        Log.d(TAG,"Task excute()");
+        new JsonTask().execute("https://api.jcdecaux.com/vls/v1/stations?location=\"-122.084,37.421998333333335\"&apiKey=557a7701b51e6ec801d01ab45c1ce4cdeeaf6f24");
     }
     protected synchronized void buildGoogleApiClient() {
         Log.d(TAG,"buildGoogleApiClient");
@@ -204,6 +221,114 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 return;
             }
+        }
+    }
+
+    private void putMarkers(GoogleMap googleMap,JSONArray jsonAr ){
+
+        for(int i=0;i<jsonAr.length();i++){
+            // yourObjects.add(myArray.getJSONObject(i));
+            try {
+                Log.d("ALAA jsonArr parsin", "object "+i+" :"+ jsonAr.getJSONObject(i).getString("number"));
+                MarkerOptions markerOptions = new MarkerOptions();
+                markerOptions.title("n "+jsonAr.getJSONObject(i).getString("number"));
+                double lat=Double.parseDouble((new JSONObject(jsonAr.getJSONObject(i).getString("position"))).getString("lat"));
+                double lng=Double.parseDouble((new JSONObject(jsonAr.getJSONObject(i).getString("position"))).getString("lng"));
+                markerOptions.position(new LatLng(lat,lng));
+                Log.d("ALAA add mark to ", lat+","+lng);
+                googleMap.addMarker(markerOptions);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private class JsonTask extends AsyncTask<String, String, String> {
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pd = new ProgressDialog(MapsActivity.this);
+            pd.setMessage("Please wait");
+            pd.setCancelable(false);
+            pd.show();
+        }
+
+        protected String doInBackground(String... params) {
+
+
+            HttpURLConnection connection = null;
+            BufferedReader reader = null;
+
+            try {
+                URL url = new URL(params[0]);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+
+
+                InputStream stream = connection.getInputStream();
+
+                reader = new BufferedReader(new InputStreamReader(stream));
+
+                StringBuffer buffer = new StringBuffer();
+                String line = "";
+
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line+"\n");
+                    Log.d("ALAA Response: ", "> " + line);   //here u ll get whole response...... :-)
+
+                }
+
+                return buffer.toString();
+
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if (pd.isShowing()){
+                pd.dismiss();
+            }
+            //txtJson.setText(result);
+            Log.d("ALAA Rp FINALEEE: ", "> " + result);   //here u ll get whole response...... :-)
+            try {
+
+                jsonArr = new JSONArray(result);
+
+                Log.d("My App", jsonArr.toString());
+
+            } catch (Throwable t) {
+                Log.e("My App", "Could not parse malformed JSON: \"" + jsonArr + "\"");
+            }
+            putMarkers(mMap,jsonArr);
+
+/*            for(int i=0;i<jsonArr.length();i++){
+               // yourObjects.add(myArray.getJSONObject(i));
+                try {
+                    Log.d("ALAA jsonArr parsin", "object "+i+" :"+ jsonArr.getJSONObject(i).getString("number"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }*/
+
         }
     }
 }
