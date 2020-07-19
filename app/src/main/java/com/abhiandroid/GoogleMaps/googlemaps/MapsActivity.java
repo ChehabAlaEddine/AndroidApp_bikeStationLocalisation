@@ -47,7 +47,8 @@ import java.util.Locale;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener,
+        GoogleMap.OnMarkerClickListener {
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     private static final String TAG = "ALOULOU";
     GoogleApiClient mGoogleApiClient;
@@ -81,6 +82,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.getUiSettings().setZoomGesturesEnabled(true);
         mMap.getUiSettings().setCompassEnabled(true);
+        mMap.setOnMarkerClickListener(this);
         //Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ContextCompat.checkSelfPermission(this,
@@ -229,18 +231,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         for(int i=0;i<jsonAr.length();i++){
             // yourObjects.add(myArray.getJSONObject(i));
             try {
-                Log.d("ALAA jsonArr parsin", "object "+i+" :"+ jsonAr.getJSONObject(i).getString("number"));
+                //Log.d("ALAA jsonArr parsin", "object "+i+" :"+ jsonAr.getJSONObject(i).getString("number"));
                 MarkerOptions markerOptions = new MarkerOptions();
                 markerOptions.title("n "+jsonAr.getJSONObject(i).getString("number"));
                 double lat=Double.parseDouble((new JSONObject(jsonAr.getJSONObject(i).getString("position"))).getString("lat"));
                 double lng=Double.parseDouble((new JSONObject(jsonAr.getJSONObject(i).getString("position"))).getString("lng"));
                 markerOptions.position(new LatLng(lat,lng));
-                Log.d("ALAA add mark to ", lat+","+lng);
+                Log.d(TAG +" add mark to ", lat+","+lng);
                 googleMap.addMarker(markerOptions);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        Log.d(TAG+" mark clicked: ", marker.getTitle());
+        return false;
     }
 
     private class JsonTask extends AsyncTask<String, String, String> {
@@ -275,7 +283,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 while ((line = reader.readLine()) != null) {
                     buffer.append(line+"\n");
-                    Log.d("ALAA Response: ", "> " + line);   //here u ll get whole response...... :-)
+                   // Log.d("ALAA Response: ", "> " + line);   //here u ll get whole response...... :-)
 
                 }
 
@@ -308,12 +316,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 pd.dismiss();
             }
             //txtJson.setText(result);
-            Log.d("ALAA Rp FINALEEE: ", "> " + result);   //here u ll get whole response...... :-)
+            Log.d(TAG+" json rep: ", "> " + result);   //here u ll get whole response...... :-)
             try {
 
                 jsonArr = new JSONArray(result);
 
-                Log.d("My App", jsonArr.toString());
+               // Log.d("My App", jsonArr.toString());
 
             } catch (Throwable t) {
                 Log.e("My App", "Could not parse malformed JSON: \"" + jsonArr + "\"");
