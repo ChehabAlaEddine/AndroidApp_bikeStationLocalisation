@@ -240,11 +240,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             try {
                 //Log.d("ALAA jsonArr parsin", "object "+i+" :"+ jsonAr.getJSONObject(i).getString("number"));
                 MarkerOptions markerOptions = new MarkerOptions();
-                markerOptions.title("n "+jsonAr.getJSONObject(i).getString("number"));
+                markerOptions.title("n "+i);
                 double lat=Double.parseDouble((new JSONObject(jsonAr.getJSONObject(i).getString("position"))).getString("lat"));
                 double lng=Double.parseDouble((new JSONObject(jsonAr.getJSONObject(i).getString("position"))).getString("lng"));
                 markerOptions.position(new LatLng(lat,lng));
-                Log.d(TAG +" add mark to ", lat+","+lng);
+                Log.d(TAG +" add mark to n:", jsonAr.getJSONObject(i).getString("number"));
                 googleMap.addMarker(markerOptions);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -255,14 +255,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public boolean onMarkerClick(Marker marker) {
         Log.d(TAG+" mark clicked: ", ""+Integer.parseInt(marker.getTitle().substring(2)));
-       //look for the json object of that mark
-        for(int i=0;i<jsonArr.length();i++){
-            try { if(Integer.parseInt(jsonArr.getJSONObject(i).getString("number")) == Integer.parseInt(marker.getTitle().substring(2))) {
-                     Log.d(TAG + "passing obj:", String.valueOf(i));
-                     showDiag(jsonArr.getJSONObject(i));
-                  }
-            } catch (JSONException e) { e.printStackTrace();}
-        }
+        try { showDiag(jsonArr.getJSONObject(Integer.parseInt(marker.getTitle().substring(2))));
+        } catch (JSONException e) { e.printStackTrace(); }
         Log.d(TAG+"oops ", "cannot find item");
         return false;
     }
