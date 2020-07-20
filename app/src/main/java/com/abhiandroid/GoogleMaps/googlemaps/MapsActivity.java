@@ -3,13 +3,16 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -282,17 +285,30 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         Button btn_ok = (Button) dialog.findViewById(R.id.buttonOk);
-        btn_cancel.setOnClickListener(new View.OnClickListener() {
+        btn_ok.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(TAG ,"show path diag OK!!!!");
+
                 dialog.dismiss();
+                displayPath("paris","lyon");
             }
         });
 
-
-
         dialog.show();
+    }
+
+    private void displayPath(String src, String dst){
+        Log.d(TAG+"displayPath","from "+src+" to "+dst);
+
+        try {
+            Uri uri = Uri.parse("https://www.google.co.in/map/dir"+src+"/"+dst);
+            Intent intent = new Intent(Intent.ACTION_VIEW,uri);
+            intent.setPackage("com.google.android.apps.maps");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            MapsActivity.this.startActivity(intent);
+        }catch (ActivityNotFoundException e ){}
+
     }
 
     private class JsonTask extends AsyncTask<String, String, String> {
