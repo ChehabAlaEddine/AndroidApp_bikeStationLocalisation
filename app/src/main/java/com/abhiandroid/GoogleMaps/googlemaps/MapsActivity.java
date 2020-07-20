@@ -1,5 +1,7 @@
 package com.abhiandroid.GoogleMaps.googlemaps;
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -15,6 +17,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -247,8 +254,51 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        Log.d(TAG+" mark clicked: ", marker.getTitle());
+        Log.d(TAG+" mark clicked: ", ""+Integer.parseInt(marker.getTitle().substring(2)));
+       //look for the json object of that mark
+        for(int i=0;i<jsonArr.length();i++){
+            try { if(Integer.parseInt(jsonArr.getJSONObject(i).getString("number")) == Integer.parseInt(marker.getTitle().substring(2))) {
+                     Log.d(TAG + "passing obj:", String.valueOf(i));
+                     showDiag(jsonArr.getJSONObject(i));
+                  }
+            } catch (JSONException e) { e.printStackTrace();}
+        }
+        Log.d(TAG+"oops ", "cannot find item");
         return false;
+    }
+
+    private void showDiag(JSONObject jsonObject) throws JSONException {
+        Log.d(TAG ,"inShowDiag");
+
+        final  Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.custom_diag);
+        dialog.setTitle("Title...");
+
+        ((TextView) dialog.findViewById(R.id.textName)).setText(jsonObject.getString("name"));
+        ((TextView) dialog.findViewById(R.id.textView)).setText(jsonObject.getString("address"));
+        ((TextView) dialog.findViewById(R.id.textViewCapacity)).setText(jsonObject.getString("bike_stands"));
+        ((TextView) dialog.findViewById(R.id.textViewAvailable)).setText(jsonObject.getString("available_bike_stands"));
+        ((TextView) dialog.findViewById(R.id.textViewOpen)).setText(jsonObject.getString("status"));
+        Button btn_cancel = (Button) dialog.findViewById(R.id.buttonCancel);
+        btn_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG ,"onDismiss diag OK!!!!");
+                dialog.dismiss();
+            }
+        });
+        Button btn_ok = (Button) dialog.findViewById(R.id.buttonOk);
+        btn_cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(TAG ,"show path diag OK!!!!");
+                dialog.dismiss();
+            }
+        });
+
+
+
+        dialog.show();
     }
 
     private class JsonTask extends AsyncTask<String, String, String> {
